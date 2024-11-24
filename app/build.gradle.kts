@@ -63,6 +63,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    // TODO 1: import data store dependency to save the state before leaving the app
     implementation("androidx.datastore:datastore-preferences:1.1.1")
     implementation(libs.hilt.android)
     kapt(libs.hilt.android.compiler)

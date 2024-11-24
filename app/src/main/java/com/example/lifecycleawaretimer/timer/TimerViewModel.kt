@@ -27,11 +27,14 @@ class TimerViewModel @Inject constructor(
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
+    // TODO 5: initiate timer by seconds
     private var timerSeconds by mutableLongStateOf(70)
 
+    // TODO 6: create a job object to control timer's start/pause actions
     var timerJob: Job? = null
         private set
 
+    // TODO 7: get an instance of DataStore to save and read the timer state
     private val Context.dataStore by preferencesDataStore(name = TIME_PREFERENCES_KEY)
 
     fun startTimer() {
@@ -49,6 +52,14 @@ class TimerViewModel @Inject constructor(
         return String.format("%02d:%02d", timerSeconds / 60, timerSeconds % 60)
     }
 
+    private fun decrementTimer() {
+        if (timerSeconds > 0) {
+            timerSeconds -= 1
+        }
+        // TODO 8: save the state on change to preserve state even if the app closed unexpectedly
+        saveTimerData(isTimerActive = true)
+    }
+
     fun stopTimer(isPause: Boolean) {
         timerJob?.cancel()
         timerJob = null
@@ -58,13 +69,6 @@ class TimerViewModel @Inject constructor(
             timerSeconds = 70
             clearPreferences()
         }
-    }
-
-    private fun decrementTimer() {
-        if (timerSeconds > 0) {
-            timerSeconds -= 1
-        }
-        saveTimerData(isTimerActive = true)
     }
 
     private fun saveTimerData(isTimerActive: Boolean) {

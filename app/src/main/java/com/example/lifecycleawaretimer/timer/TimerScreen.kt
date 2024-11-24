@@ -20,15 +20,22 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 @Composable
 fun TimerScreen(timerViewModel: TimerViewModel) {
 
+    // TODO 2: get lifecycle owner for composable functions
     val lifecycleOwner = LocalLifecycleOwner.current
 
+    // TODO 3: in a disposable effect, pass the lifecycle owner to make the lifecycle aware of the event observer
+    // disposable effect helps dispose of any consuming resources when the composable is disposed of
+    // event observers are consuming as they always listen to the lifecycle changes, thus must be gotten rid of
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
+            // access the lifecycle events here
             if (event == Lifecycle.Event.ON_RESUME) {
+                // TODO 9: read the saved timer state when the app resumes
                 timerViewModel.getTimerDataFromPreferences()
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
+        // TODO 4: override the disposable effect's onDispose to get rid of the observer when the composable is disposed of
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
         }
