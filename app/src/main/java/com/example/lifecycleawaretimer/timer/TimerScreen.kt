@@ -25,7 +25,7 @@ fun TimerScreen(timerViewModel: TimerViewModel) {
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                timerViewModel.getTimerData()
+                timerViewModel.getTimerDataFromPreferences()
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -40,20 +40,19 @@ fun TimerScreen(timerViewModel: TimerViewModel) {
         verticalArrangement = Arrangement.Center,
     ) {
         Text(
-            String.format("%02d:%02d", timerViewModel.timerSeconds / 60, timerViewModel.timerSeconds % 60),
+            timerViewModel.getFormattedTime(),
             fontSize = 32.sp
         )
         Spacer(modifier = Modifier.height(16.dp))
         Button(onClick = {
             if (timerViewModel.timerJob == null) timerViewModel.startTimer()
-            else timerViewModel.pauseTimer()
+            else timerViewModel.stopTimer(isPause = true)
         }) {
             Text("Start/Pause")
         }
         Spacer(modifier = Modifier.height(16.dp))
         Button(onClick = {
-            timerViewModel.stopTimer()
-            timerViewModel.clearPreferences()
+            timerViewModel.stopTimer(isPause = false)
         }) {
             Text("Reset")
         }

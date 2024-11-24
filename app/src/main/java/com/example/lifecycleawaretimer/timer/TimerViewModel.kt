@@ -1,15 +1,18 @@
 package com.example.lifecycleawaretimer.timer
 
+import android.annotation.SuppressLint
 import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.setValue
-import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.lifecycleawaretimer.data.Constants.CLOSURE_TIME_KEY
+import com.example.lifecycleawaretimer.data.Constants.IS_TIMER_ACTIVE
+import com.example.lifecycleawaretimer.data.Constants.TIMER_SECONDS_KEY
+import com.example.lifecycleawaretimer.data.Constants.TIME_PREFERENCES_KEY
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Job
@@ -24,15 +27,14 @@ class TimerViewModel @Inject constructor(
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
-    var timerSeconds by mutableLongStateOf(70)
-        private set
+    private var timerSeconds by mutableLongStateOf(70)
 
     var timerJob: Job? = null
+        private set
 
-    private val Context.dataStore by preferencesDataStore(name = "timer_preferences")
+    private val Context.dataStore by preferencesDataStore(name = TIME_PREFERENCES_KEY)
 
-    fun startTimer(){
-        pauseTimer()
+    fun startTimer() {
         timerJob = viewModelScope.launch {
             while (timerSeconds > 0) {
                 delay(1000L)
@@ -42,16 +44,20 @@ class TimerViewModel @Inject constructor(
         }
     }
 
-    fun pauseTimer(){
-        timerJob?.cancel()
-        timerJob = null
-        saveTimerData(isTimerActive = false)
+    @SuppressLint("DefaultLocale")
+    fun getFormattedTime(): String {
+        return String.format("%02d:%02d", timerSeconds / 60, timerSeconds % 60)
     }
 
-    fun stopTimer(){
-        pauseTimer()
-        timerSeconds = 70
-        clearPreferences()
+    fun stopTimer(isPause: Boolean) {
+        timerJob?.cancel()
+        timerJob = null
+        if (isPause) {
+            saveTimerData(isTimerActive = false)
+        } else {
+            timerSeconds = 70
+            clearPreferences()
+        }
     }
 
     private fun decrementTimer() {
@@ -60,10 +66,6 @@ class TimerViewModel @Inject constructor(
         }
         saveTimerData(isTimerActive = true)
     }
-
-    private val CLOSURE_TIME_KEY = longPreferencesKey("closure_time")
-    private val TIMER_SECONDS_KEY = longPreferencesKey("timer_second")
-    private val IS_TIMER_ACTIVE = booleanPreferencesKey("is_timer_active")
 
     private fun saveTimerData(isTimerActive: Boolean) {
         val currentTime = System.currentTimeMillis() / 1000
@@ -76,7 +78,7 @@ class TimerViewModel @Inject constructor(
         }
     }
 
-    fun getTimerData() {
+    fun getTimerDataFromPreferences() {
         viewModelScope.launch {
             val closureTime = context.dataStore.data.map { preferences ->
                 preferences[CLOSURE_TIME_KEY] ?: 0L
@@ -87,6 +89,7 @@ class TimerViewModel @Inject constructor(
             val isTimerActive = context.dataStore.data.map { preferences ->
                 preferences[IS_TIMER_ACTIVE] ?: false
             }.first()
+
             val currentTime = System.currentTimeMillis() / 1000
             val timeDifference = currentTime - closureTime
 
@@ -94,24 +97,25 @@ class TimerViewModel @Inject constructor(
         }
     }
 
-    private fun setCurrentTimerValue(timeDifference: Long, timerSeconds: Long, isTimerActive: Boolean){
-
-        if(timerSeconds == 0L) return
-
-        if(!isTimerActive) {
+    private fun setCurrentTimerValue(
+        timeDifference: Long,
+        timerSeconds: Long,
+        isTimerActive: Boolean,
+    ) {
+        if (timerSeconds == 0L) return
+        if (!isTimerActive) {
             this.timerSeconds = timerSeconds
         } else {
             val remainingTimeInSeconds = timerSeconds - timeDifference
-            if(remainingTimeInSeconds <= 0) stopTimer()
+            if (remainingTimeInSeconds <= 0) return
             else {
                 this.timerSeconds = remainingTimeInSeconds
                 startTimer()
             }
         }
-
     }
 
-    fun clearPreferences() {
+    private fun clearPreferences() {
         viewModelScope.launch {
             context.dataStore.edit { preferences ->
                 preferences.clear()
