@@ -40,7 +40,7 @@ fun TimerScreen(timerViewModel: TimerViewModel) {
         verticalArrangement = Arrangement.Center,
     ) {
         Text(
-            String.format("%02d:%02d", timerViewModel.timerMinutes, timerViewModel.timerSeconds),
+            String.format("%02d:%02d", timerViewModel.timerSeconds / 60, timerViewModel.timerSeconds % 60),
             fontSize = 32.sp
         )
         Spacer(modifier = Modifier.height(16.dp))
